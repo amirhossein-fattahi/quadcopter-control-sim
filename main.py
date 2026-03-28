@@ -20,6 +20,13 @@ from matplotlib.animation import FuncAnimation
 from config.drone_params import get_default_drone_params
 from config.sim_params import get_default_sim_params
 from config.controller_params import get_default_controller_gains
+from controllers.pid import CascadedPIDController
+from dynamics.rigid_body import (
+    rk4_step,
+    quad_dynamics,
+    wrap_to_pi,
+    euler_to_rotation,
+)
 
 
 # =========================
@@ -28,11 +35,12 @@ from config.controller_params import get_default_controller_gains
 def clamp(value, low, high):
     return np.minimum(np.maximum(value, low), high)
 
-
+'''
+### REMOVE LATER ###
 def wrap_to_pi(angle):
     """Wrap angle to [-pi, pi]."""
     return (angle + np.pi) % (2.0 * np.pi) - np.pi
-
+'''
 
 def rot_x(phi):
     c, s = np.cos(phi), np.sin(phi)
@@ -60,14 +68,15 @@ def rot_z(psi):
         [0, 0, 1]
     ])
 
-
+'''
+### REMOVE LATER ###
 def euler_to_rotation(phi, theta, psi):
     """
     Body-to-world rotation matrix using ZYX convention:
     R = Rz(psi) * Ry(theta) * Rx(phi)
     """
     return rot_z(psi) @ rot_y(theta) @ rot_x(phi)
-
+'''
 
 def euler_rate_matrix(phi, theta):
     """
@@ -89,7 +98,8 @@ def euler_rate_matrix(phi, theta):
         [0.0, sphi / cth, cphi / cth]
     ])
 
-
+"""
+### REMOVE LATER ###
 def rk4_step(f, x, u, dt, params):
     """One Runge-Kutta 4 integration step."""
     k1 = f(x, u, params)
@@ -97,7 +107,7 @@ def rk4_step(f, x, u, dt, params):
     k3 = f(x + 0.5 * dt * k2, u, params)
     k4 = f(x + dt * k3, u, params)
     return x + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
-
+"""
 
 # =========================
 # Parameters
@@ -174,6 +184,9 @@ def reference_trajectory(t):
 # =========================
 # Dynamics
 # =========================
+
+'''
+### REMOVE LATER ###
 def quad_dynamics(state, control, params):
     """
     State:
@@ -208,6 +221,7 @@ def quad_dynamics(state, control, params):
     omega_dot = np.linalg.solve(J, tau - np.cross(omega, J @ omega))
 
     return np.concatenate([pos_dot, vel_dot, euler_dot, omega_dot])
+'''
 
 
 # =========================
@@ -492,7 +506,8 @@ def main():
     sim_params = get_default_sim_params()
     gains = get_default_controller_gains()
 
-    controller = CascadedController(gains, params)
+    #controller = CascadedController(gains, params)
+    controller = CascadedPIDController(gains, params)
 
     time, states, controls, refs, desired_angles_hist = simulate(
         params=params,
