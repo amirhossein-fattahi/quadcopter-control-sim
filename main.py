@@ -17,6 +17,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+from trajectories.waypoint import get_default_waypoint_trajectory
+from trajectories.hover import get_default_hover_trajectory
+from trajectories.circle import get_default_circular_trajectory
+from environments.indoor import get_default_indoor_environment
+from environments.outdoor import get_windy_outdoor_environment
 from config.drone_params import get_default_drone_params
 from config.sim_params import get_default_sim_params
 from config.controller_params import get_default_controller_gains
@@ -509,12 +514,21 @@ def main():
     #controller = CascadedController(gains, params)
     controller = CascadedPIDController(gains, params)
 
+    #trajectory = get_default_waypoint_trajectory()
+    #trajectory = get_default_hover_trajectory()
+    trajectory = get_default_circular_trajectory()
+    ref = trajectory.get_reference(t)
+
+    #environment = get_default_indoor_environment()
+    environment = get_windy_outdoor_environment()
+    disturbance_model = environment.get_disturbance_model()
+
     time, states, controls, refs, desired_angles_hist = simulate(
         params=params,
         controller=controller,
         t_final=sim_params.t_final,
         dt=sim_params.dt
-
+    )
 
     final_error = np.linalg.norm(refs[-1] - states[-1, 0:3])
     mean_error = np.mean(np.linalg.norm(refs - states[:, 0:3], axis=1))
