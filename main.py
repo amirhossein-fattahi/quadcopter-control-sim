@@ -16,12 +16,16 @@ from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-
+# Trajectories & Environments
 from trajectories.waypoint import get_default_waypoint_trajectory
 from trajectories.hover import get_default_hover_trajectory
 from trajectories.circle import get_default_circular_trajectory
 from environments.indoor import get_default_indoor_environment
 from environments.outdoor import get_windy_outdoor_environment
+# Visualization & Utils
+from visualization.render import render_simulation_results, show_rendered_results
+from utils.logger import SimpleLogger
+# Config, Controller & Dynamics
 from config.drone_params import get_default_drone_params
 from config.sim_params import get_default_sim_params
 from config.controller_params import get_default_controller_gains
@@ -532,6 +536,28 @@ def main():
 
     final_error = np.linalg.norm(refs[-1] - states[-1, 0:3])
     mean_error = np.mean(np.linalg.norm(refs - states[:, 0:3], axis=1))
+
+    rendered = render_simulation_results(
+        time=time,
+        states=states,
+        controls=controls,
+        refs=refs,
+        desired_angles_hist=desired_angles_hist,
+        arm_length=params.arm_length,
+    )
+
+    logger = SimpleLogger(base_dir="results/logs", run_name="first_run")
+    logger.save_arrays_npz(
+        time=time,
+        states=states,
+        controls=controls,
+        refs=refs,
+        desired_angles_hist=desired_angles_hist,
+    )
+    logger.save_time_series_csv(time=time, states=states, controls=controls, refs=refs)
+    logger.save_figures(rendered["figures"])
+
+    show_rendered_results()
 
     print("Simulation finished.")
     print(f"Final position: {states[-1, 0:3]}")
